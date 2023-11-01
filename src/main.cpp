@@ -15,7 +15,10 @@
 #include <cstdio>
 #include <SDL.h>
 #include <SDL_opengl.h>
+#include <stack>
 
+
+static std::vector<std::string> valid_regex_terms = {"|", "*", "(", ")"};
 
 
 // Main code
@@ -105,9 +108,9 @@ int main(int argc, char *argv[])
 
     auto graph_drawn_state = GraphDrawnState();
     auto selected_node_state = SelectedNodeState();
-    bool show_demo_window = false;
-    bool show_input_array_window = false;
+    auto window_state = WindowState();
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    char regex_term[10000];
 
 
     // Main loop
@@ -151,7 +154,8 @@ int main(int argc, char *argv[])
 
         if (ImGui::BeginMenuBar()) {
             if (ImGui::BeginMenu("Options")) {
-                ImGui::MenuItem("Show Demo Window", nullptr, &show_demo_window);
+                ImGui::MenuItem("Show Demo Window", nullptr, &window_state.show_demo_window);
+                ImGui::MenuItem("Show Regex Creation", nullptr, &window_state.regex_creator);
                 ImGui::EndMenu();
             }
             ImGui::EndMenuBar();
@@ -159,15 +163,23 @@ int main(int argc, char *argv[])
 
 
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
+        if (window_state.show_demo_window)
+            ImGui::ShowDemoWindow(&window_state.show_demo_window);
 
-
-        if (show_input_array_window) {
-            ImGui::Begin("Input Array", &show_input_array_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-            ImGui::Text("Input Array");
-            ImGui::End();
+        if (window_state.regex_creator) {
+            if(ImGui::Begin("Regex Creator", &window_state.regex_creator, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar)) {
+                ImGui::Text("Regex Creator");
+                ImGui::Separator();
+                ImGui::Text("Regex: ");
+                ImGui::SameLine();
+                ImGui::InputText("##regex", regex_term, IM_ARRAYSIZE(regex_term), ImGuiInputTextFlags_ReadOnly);
+                ImGui::End();
+                graph.clear();
+                // Ɛ, Generate the NFA Graph
+                std::stack<GraphNode*> node_stack;
+            }
         }
+
 
         if (!graph_drawn_state.data_pass) {
             master->set_position({

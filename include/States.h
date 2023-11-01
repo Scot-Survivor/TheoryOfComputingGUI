@@ -18,4 +18,9 @@ struct SelectedNodeState {
     ImVec2 p1, p2;
     ImVec2 start_pos;
 };
+
+struct WindowState {
+    bool regex_creator = false;
+    bool show_demo_window = false;
+};
 #endif //REGEXTOOL_STATES_H

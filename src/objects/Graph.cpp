@@ -18,7 +18,7 @@ void Graph::draw_edges(ImDrawList *drawList) {
             if (node != connected_node) {
                 ImVec2 start = node->get_position();
                 ImVec2 end = connected_node->get_position();
-                draw_edge(drawList, start, end);
+                draw_edge(drawList, start, end, get_edge(node, connected_node));
             } else {
                 // Special Curve to point to itself
                 ImVec2 start = node->get_position();
@@ -37,9 +37,10 @@ void Graph::draw_edges(ImDrawList *drawList) {
     }
 }
 
-void Graph::add_node(GraphNode *node, const std::vector<int>& parent_nodes) {
-    for (int parent_node : parent_nodes) {
-        nodes[parent_node]->add_connection(node);
+void Graph::add_node(GraphNode *node, const std::vector<EdgeData>& parent_nodes) {
+    for (EdgeData parent_node : parent_nodes) {
+        parent_node.n1 = (int)nodes.size()+1;
+        nodes[parent_node.n2]->add_connection(node);
     }
     nodes.push_back(node);
 }
@@ -120,16 +121,13 @@ void Graph::data_pass() {
     }
 }
 
-void Graph::add_edge(EdgeData edge) {
+void Graph::add_edge(const EdgeData& edge) {
     nodes.at(edge.n1)->add_connection(nodes.at(edge.n2));
+    edges.push_back(edge);
 }
 
-void Graph::add_edge(int n1, int n2) {
-    nodes.at(n1)->add_connection(nodes.at(n2));
-}
-
-void Graph::add_edge(const std::vector<EdgeData>& edges) {
-    for (EdgeData edge : edges) {
+void Graph::add_edge(const std::vector<EdgeData>& p_edges) {
+    for (const EdgeData& edge : p_edges) {
         add_edge(edge);
     }
 }
@@ -175,7 +173,7 @@ std::vector<GraphNode *> Graph::select_nodes(ImVec2 p1, ImVec2 p2) {
     return selected_nodes;
 }
 
-void Graph::draw_edge(ImDrawList *drawList, ImVec2 start, ImVec2 end) {
+void Graph::draw_edge(ImDrawList *drawList, ImVec2 start, ImVec2 end, EdgeData edgeData) {
     ImVec2 diff = {end.x - start.x, end.y - start.y};
     float length = sqrtf(diff.x * diff.x + diff.y * diff.y);
     float angle = atan2f(diff.y, diff.x);
@@ -184,7 +182,19 @@ void Graph::draw_edge(ImDrawList *drawList, ImVec2 start, ImVec2 end) {
     float line_length_y = line_length * sinf(angle);
     ImVec2 line_start = {start.x + (root_node->get_radius() * cosf(angle)), start.y + (root_node->get_radius() * sinf(angle))};
     ImVec2 line_end = {line_start.x + line_length_x, line_start.y + line_length_y};
+    edgeData.p1 = line_start;
+    edgeData.p2 = line_end;
     drawList->AddLine(line_start, line_end, this->border_color, this->border_size);
+
+
+    // Add Label Text
+    ImVec2 text_size = ImGui::CalcTextSize(edgeData.label.c_str());
+    if (text_size.y == 0) text_size.y = 1; // Avoid zero-division.
+    if (text_size.y > line_length) text_size.y = line_length;
+    ImVec2 text_pos = {line_start.x + (line_length_x / 2) - (text_size.x / 2), line_start.y + (line_length_y / 2) - (text_size.y / 2)};
+    drawList->AddText(text_pos, ImColor(0, 0, 0), edgeData.label.c_str());
+
+
     // Add arrow head parts
     float arrow_head_length = 10;
     float arrow_head_angle = 0.5;
@@ -197,4 +207,18 @@ void Graph::draw_edge(ImDrawList *drawList, ImVec2 start, ImVec2 end) {
     arrow_head_start = {line_end.x - arrow_head_angle_x, line_end.y - arrow_head_angle_y};
     drawList->AddLine(line_end, arrow_head_start, this->border_color, this->border_size);
 
+}
+
+EdgeData Graph::get_edge(int n1, int n2) {
+    for (const EdgeData& edge : edges) {
+        if (edge.n1 == n1 && edge.n2 == n2) {
+            return edge;
+        }
+    }
+    return {{}, {}, "", -1, -1};
+}
+
+EdgeData Graph::get_edge(GraphNode *n1, GraphNode *n2) {
+    return get_edge(std::distance(nodes.begin(), std::find(nodes.begin(), nodes.end(), n1)),
+                    std::distance(nodes.begin(), std::find(nodes.begin(), nodes.end(), n2)));
 }

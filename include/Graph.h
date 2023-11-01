@@ -7,21 +7,18 @@
 #include "CL/sycl.hpp"
 #include <vector>
 #include <algorithm>
+#include <string>
 #include "GraphNode.h"
 
 /**
- * Used in the logic of drawing for working out canvas size.
- */
-struct node_data {
-    float x, y, width, height;
-};
-
-/**
- * Simple Edge struct for storing edge data.
+ * EdgeData
  */
 struct EdgeData {
-    int n1, n2;
+    ImVec2 p1, p2;  // Edge points
+    std::string label;  // Edge label
+    int n1, n2;  // Connecting nodes
 };
+
 
 /**
  * A graph is a collection of nodes, its purpose is to properly call the draw functions,
@@ -30,6 +27,7 @@ struct EdgeData {
 class Graph {
 private:
     std::vector<GraphNode*> nodes;
+    std::vector<EdgeData> edges;
     GraphNode *root_node;
     ImFont *font;
     float font_scale = 2.0f;
@@ -45,7 +43,16 @@ private:
      * @param start Start pos
      * @param end End pos
      */
-    void draw_edge(ImDrawList* drawList, ImVec2 start, ImVec2 end);
+    void draw_edge(ImDrawList* drawList, ImVec2 start, ImVec2 end, EdgeData edgeData);
+
+    /**
+     * Get the edge data of a given edge.
+     * @param n1
+     * @param n2
+     * @return
+     */
+    EdgeData get_edge(GraphNode* n1, GraphNode* n2);
+    EdgeData get_edge(int n1, int n2);
 public:
     Graph();
     ~Graph() = default;
@@ -63,7 +70,7 @@ public:
     /**
      * Add a node to the node list, as well as connect it to the correct nodes.
      */
-    void add_node(GraphNode* node, const std::vector<int>& parent_nodes);
+    void add_node(GraphNode* node, const std::vector<EdgeData>& parent_nodes);
     void add_node(GraphNode* node);
 
     /**
@@ -111,14 +118,20 @@ public:
       * Add a new edge between two or more nodes.
       * @param n1, n2...
       */
-     void add_edge(EdgeData edge);
-     void add_edge(int n1, int n2);
+     void add_edge(const EdgeData& edge);
      void add_edge(const std::vector<EdgeData>& edges);
 
      /**
       * Get a buffer of the nodes.
       */
       sycl::buffer<GraphNode*> get_node_buffer();
+
+      /**
+       * Clear the graph.
+       */
+      void clear() {
+          nodes.clear();
+      }
 
 };
 
