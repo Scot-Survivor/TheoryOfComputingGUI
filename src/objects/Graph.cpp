@@ -18,15 +18,7 @@ void Graph::draw_edges(ImDrawList *drawList) {
             if (node != connected_node) {
                 ImVec2 start = node->get_position();
                 ImVec2 end = connected_node->get_position();
-                ImVec2 diff = {end.x - start.x, end.y - start.y};
-                float length = sqrtf(diff.x * diff.x + diff.y * diff.y);
-                float angle = atan2f(diff.y, diff.x);
-                float line_length = length - (node->get_radius() + connected_node->get_radius());
-                float line_length_x = line_length * cosf(angle);
-                float line_length_y = line_length * sinf(angle);
-                ImVec2 line_start = {start.x + (node->get_radius() * cosf(angle)), start.y + (node->get_radius() * sinf(angle))};
-                ImVec2 line_end = {line_start.x + line_length_x, line_start.y + line_length_y};
-                drawList->AddLine(line_start, line_end, this->border_color, this->border_size);
+                draw_edge(drawList, start, end);
             } else {
                 // Special Curve to point to itself
                 ImVec2 start = node->get_position();
@@ -181,4 +173,28 @@ std::vector<GraphNode *> Graph::select_nodes(ImVec2 p1, ImVec2 p2) {
         });
     });
     return selected_nodes;
+}
+
+void Graph::draw_edge(ImDrawList *drawList, ImVec2 start, ImVec2 end) {
+    ImVec2 diff = {end.x - start.x, end.y - start.y};
+    float length = sqrtf(diff.x * diff.x + diff.y * diff.y);
+    float angle = atan2f(diff.y, diff.x);
+    float line_length = length - (root_node->get_radius() + root_node->get_radius());
+    float line_length_x = line_length * cosf(angle);
+    float line_length_y = line_length * sinf(angle);
+    ImVec2 line_start = {start.x + (root_node->get_radius() * cosf(angle)), start.y + (root_node->get_radius() * sinf(angle))};
+    ImVec2 line_end = {line_start.x + line_length_x, line_start.y + line_length_y};
+    drawList->AddLine(line_start, line_end, this->border_color, this->border_size);
+    // Add arrow head parts
+    float arrow_head_length = 10;
+    float arrow_head_angle = 0.5;
+    float arrow_head_angle_x = arrow_head_length * cosf(angle + arrow_head_angle);
+    float arrow_head_angle_y = arrow_head_length * sinf(angle + arrow_head_angle);
+    ImVec2 arrow_head_start = {line_end.x - arrow_head_angle_x, line_end.y - arrow_head_angle_y};
+    drawList->AddLine(line_end, arrow_head_start, this->border_color, this->border_size);
+    arrow_head_angle_x = arrow_head_length * cosf(angle - arrow_head_angle);
+    arrow_head_angle_y = arrow_head_length * sinf(angle - arrow_head_angle);
+    arrow_head_start = {line_end.x - arrow_head_angle_x, line_end.y - arrow_head_angle_y};
+    drawList->AddLine(line_end, arrow_head_start, this->border_color, this->border_size);
+
 }
