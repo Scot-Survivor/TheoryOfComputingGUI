@@ -11,6 +11,7 @@
 #include "imgui_impl_opengl2.h"
 #include "GraphNode.h"
 #include "Graph.h"
+#include "States.h"
 #include <cstdio>
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -77,6 +78,31 @@ int main(int argc, char *argv[])
     //IM_ASSERT(font != nullptr);
 
     // Our state
+    Graph graph = Graph();
+    auto *master = new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20,  "A");
+    graph.add_node(master);
+
+    graph.add_node(
+            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20, "B"),
+            {0});
+
+    graph.add_node(
+            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20, "C"),
+            {0, 1});
+
+    graph.add_node(
+            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20, "D"),
+            {0, 1, 2});
+
+    graph.add_node(
+            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20, "E"),
+            {2, 3});
+    graph.add_node(
+            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20, "F"),
+            {3});
+    graph.add_edge({{3, 0}, {1, 4}});
+
+    auto graph_drawn_state = GraphDrawnState();
     bool show_demo_window = false;
     bool show_input_array_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -131,32 +157,24 @@ int main(int argc, char *argv[])
             ImGui::Text("Input Array");
             ImGui::End();
         }
-
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
-        Graph graph = Graph();
-        auto *master = new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20,  "A");
-        graph.add_node(master);
+        master->set_position({
+            ImGui::GetIO().DisplaySize.x / 2,
+            ImGui::GetIO().DisplaySize.y / 2
+        });
 
-        graph.add_node(
-            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20, "B"),
-            {0});
-
-        graph.add_node(
-            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20, "C"),
-            {0, 1});
-
-        graph.add_node(
-            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20, "D"),
-            {0, 1, 2});
-
-        graph.add_node(
-            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20, "E"),
-            {2, 3});
-
-        graph.add_edge(0, 0);
-
+        if (!graph_drawn_state.data_pass) {
+            graph.data_pass();
+            graph_drawn_state.data_pass = true;
+        }
         graph.draw(draw_list);
+
         ImGui::End();
+
+        if ( ImGui::IsMouseDoubleClicked( 0 ) )
+        {
+            printf( "DoubleClick\n" );
+        }
 
         // Rendering
         ImGui::Render();

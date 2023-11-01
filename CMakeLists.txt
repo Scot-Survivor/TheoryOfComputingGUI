@@ -19,6 +19,7 @@ add_executable(${PROJECT_NAME} src/main.cpp
         include/GraphNode.h
         src/objects/Graph.cpp
         include/Graph.h
+        include/States.h
 )
 # Add third party libraries.
 add_subdirectory(libs)

@@ -52,7 +52,6 @@ void Graph::add_node(GraphNode *node) {
 }
 
 void Graph::draw(ImDrawList *drawList) {
-    this->data_pass();
     this->draw_edges(drawList);
     for (GraphNode* node : nodes) {
         this->draw_edges(drawList);
