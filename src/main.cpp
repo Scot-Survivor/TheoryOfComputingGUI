@@ -214,7 +214,6 @@ int main(int argc, char *argv[])
             draw_list->AddRectFilled(selected_node_state.p1, selected_node_state.p2, IM_COL32(0, 233, 255, 20));
             for (GraphNode* node : graph.select_nodes(selected_node_state.p1, selected_node_state.p2)) {
                 if (node != nullptr) {
-                    printf("Selected Node: %s\n", node->get_label().c_str());
                     if (std::find(selected_node_state.selected_nodes.begin(), selected_node_state.selected_nodes.end(), node) == selected_node_state.selected_nodes.end()) {
                         selected_node_state.selected_nodes.push_back(node);
                         selected_node_state.selected_nodes_start_positions.push_back(node->get_position());
