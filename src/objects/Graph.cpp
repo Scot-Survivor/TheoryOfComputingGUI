@@ -165,3 +165,20 @@ GraphNode *Graph::get_node(ImVec2 position) {
 sycl::buffer<GraphNode *> Graph::get_node_buffer() {
     return {nodes.data(), nodes.size()};
 }
+
+std::vector<GraphNode *> Graph::select_nodes(ImVec2 p1, ImVec2 p2) {
+    std::vector<GraphNode*> selected_nodes;
+    // Copy nodes into selected_nodes
+    std::copy(nodes.begin(), nodes.end(), std::back_inserter(selected_nodes));
+    sycl::buffer<GraphNode*> selected_nodes_buffer(selected_nodes.data(), selected_nodes.size());
+    q.submit([&](sycl::handler &h) {
+        auto selected_nodes_accessor = selected_nodes_buffer.get_access<sycl::access::mode::read_write>(h);
+        h.parallel_for(sycl::range<1>(selected_nodes_accessor.size()), [=](sycl::id<1> idx) {
+            GraphNode* node = selected_nodes_accessor[idx];
+            if (node->get_position().x < p1.x || node->get_position().x > p2.x || node->get_position().y < p1.y || node->get_position().y > p2.y) {
+                selected_nodes_accessor[idx] = nullptr;
+            }
+        });
+    });
+    return selected_nodes;
+}

@@ -79,26 +79,27 @@ int main(int argc, char *argv[])
 
     // Our state
     Graph graph = Graph();
-    auto *master = new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20,  "A");
+    float node_radius = 20;
+    auto *master = new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius,  "A");
     graph.add_node(master);
 
     graph.add_node(
-            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20, "B"),
+            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "B"),
             {0});
 
     graph.add_node(
-            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20, "C"),
+            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "C"),
             {0, 1});
 
     graph.add_node(
-            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20, "D"),
+            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "D"),
             {0, 1, 2});
 
     graph.add_node(
-            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20, "E"),
+            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "E"),
             {2, 3});
     graph.add_node(
-            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20, "F"),
+            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "F"),
             {3});
     graph.add_edge({{3, 0}, {1, 4}});
 
@@ -126,20 +127,14 @@ int main(int argc, char *argv[])
                 done = true;
             if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
                 done = true;
-        }
 
-        if ( ImGui::IsMouseDoubleClicked( 0 ) )
-        {
-            ImVec2 pos = ImGui::GetMousePos();
-            GraphNode* node = graph.get_node(pos);
-            selected_node_state.selected_node = node;
-            if (selected_node_state.selected_node != nullptr) printf("Selected node: %s\n", node->get_label().c_str());
-        } else if (ImGui::IsMouseClicked(0) && selected_node_state.selected_node != nullptr) {
-            selected_node_state.selected_node = nullptr;
-        }
-
-        if (selected_node_state.selected_node != nullptr) {
-            selected_node_state.selected_node->set_position(ImGui::GetMousePos());
+            // Check if escape
+            if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE && event.window.windowID == SDL_GetWindowID(window) && selected_node_state.has_box_selected) {
+                selected_node_state.has_box_selected = false;
+                selected_node_state.has_set_start_pos = false;
+                selected_node_state.selected_nodes.clear();
+                selected_node_state.selected_nodes_start_positions.clear();
+            }
         }
 
         // Start the Dear ImGui frame
@@ -151,6 +146,8 @@ int main(int argc, char *argv[])
         ImGui::Begin("RegexTool", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
                                                      ImGuiWindowFlags_NoCollapse |ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollWithMouse |
                                                      ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBackground);
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
 
         if (ImGui::BeginMenuBar()) {
             if (ImGui::BeginMenu("Options")) {
@@ -160,7 +157,6 @@ int main(int argc, char *argv[])
             ImGui::EndMenuBar();
         }
 
-        // test();
 
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (show_demo_window)
@@ -172,17 +168,90 @@ int main(int argc, char *argv[])
             ImGui::Text("Input Array");
             ImGui::End();
         }
-        ImDrawList* draw_list = ImGui::GetWindowDrawList();
-        master->set_position({
-            ImGui::GetIO().DisplaySize.x / 2,
-            ImGui::GetIO().DisplaySize.y / 2
-        });
 
         if (!graph_drawn_state.data_pass) {
+            master->set_position({
+                                         ImGui::GetIO().DisplaySize.x / 2,
+                                         ImGui::GetIO().DisplaySize.y / 2
+                                 });
             graph.data_pass();
             graph_drawn_state.data_pass = true;
         }
         graph.draw(draw_list);
+
+        if ( ImGui::IsMouseDoubleClicked( 0 ))
+        {
+            ImVec2 pos = ImGui::GetMousePos();
+            GraphNode* node = graph.get_node(pos);
+            selected_node_state.selected_node = node;
+            if (selected_node_state.selected_node != nullptr) {
+                selected_node_state.is_box_selecting = false;
+            }
+            else {
+                selected_node_state.is_box_selecting = true;
+                selected_node_state.p1 = pos;
+                draw_list->AddRectFilled(pos, pos, IM_COL32(0, 233, 255, 20));
+            }
+        } else if (ImGui::IsMouseClicked(0)) {
+            if (selected_node_state.selected_node != nullptr) selected_node_state.selected_node = nullptr;
+            if (selected_node_state.is_box_selecting && ImGui::IsMouseDown(0)) {
+                selected_node_state.has_box_selected = true;
+                selected_node_state.p2 = ImGui::GetMousePos();
+                selected_node_state.selected_nodes = graph.select_nodes(selected_node_state.p1, selected_node_state.p2);
+                draw_list->AddRectFilled(selected_node_state.p1, selected_node_state.p2, IM_COL32(0, 233, 255, 20));
+            }
+            if (!selected_node_state.is_box_selecting && selected_node_state.has_box_selected) {
+                selected_node_state.start_pos = ImGui::GetMousePos();
+                selected_node_state.has_set_start_pos = true;
+            } else if (!selected_node_state.is_box_selecting && selected_node_state.has_box_selected && selected_node_state.has_set_start_pos) {
+                selected_node_state.has_box_selected = false;
+                selected_node_state.has_set_start_pos = false;
+                selected_node_state.selected_nodes.clear();
+                selected_node_state.selected_nodes_start_positions.clear();
+            }
+        } else if (selected_node_state.is_box_selecting) {
+            selected_node_state.p2 = ImGui::GetMousePos();
+            draw_list->AddRectFilled(selected_node_state.p1, selected_node_state.p2, IM_COL32(0, 233, 255, 20));
+            for (GraphNode* node : graph.select_nodes(selected_node_state.p1, selected_node_state.p2)) {
+                if (node != nullptr) {
+                    printf("Selected Node: %s\n", node->get_label().c_str());
+                    if (std::find(selected_node_state.selected_nodes.begin(), selected_node_state.selected_nodes.end(), node) == selected_node_state.selected_nodes.end()) {
+                        selected_node_state.selected_nodes.push_back(node);
+                        selected_node_state.selected_nodes_start_positions.push_back(node->get_position());
+                    }
+                }
+            }
+        }
+        if (selected_node_state.is_box_selecting && !ImGui::IsMouseDown(0)) {
+            selected_node_state.is_box_selecting = false;
+            selected_node_state.has_box_selected = true;
+        } else if (!selected_node_state.is_box_selecting && !selected_node_state.has_box_selected) {
+            selected_node_state.selected_nodes.clear();
+            selected_node_state.selected_nodes_start_positions.clear();
+        }
+        if (!selected_node_state.is_box_selecting && selected_node_state.has_box_selected && ImGui::IsMouseDown(0) && selected_node_state.has_set_start_pos) {
+            // Move nodes that are selected
+            ImVec2 mouse_pos = ImGui::GetMousePos();
+            ImVec2 delta = {mouse_pos.x - selected_node_state.start_pos.x, mouse_pos.y - selected_node_state.start_pos.y};
+            for (int i = 0; i < selected_node_state.selected_nodes.size(); i++) {
+                GraphNode* node = selected_node_state.selected_nodes[i];
+                ImVec2 n_start_pos = selected_node_state.selected_nodes_start_positions[i];
+                node->set_position({n_start_pos.x + delta.x, n_start_pos.y + delta.y});
+            }
+        } else if ((!selected_node_state.is_box_selecting && selected_node_state.has_box_selected && !ImGui::IsMouseDown(0) && selected_node_state.has_set_start_pos)){
+            selected_node_state.has_set_start_pos = false;
+            selected_node_state.has_box_selected = false;
+            selected_node_state.selected_nodes.clear();
+            selected_node_state.selected_nodes_start_positions.clear();
+        }
+
+        if (selected_node_state.selected_node != nullptr) {
+            selected_node_state.selected_node->set_position(ImGui::GetMousePos());
+        }
+
+        for (GraphNode* node : selected_node_state.selected_nodes) {
+            draw_list->AddCircleFilled(node->get_position(), node->get_radius(), IM_COL32(0, 233, 255, 50));
+        }
 
         ImGui::End();
 

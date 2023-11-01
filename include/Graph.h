@@ -37,6 +37,15 @@ private:
     float border_size = 4.0f;
     ImColor node_color = ImColor(255, 255, 255);
     sycl::queue q;
+
+
+    /**
+     * Edges require an arrow head, this function draws the arrow head, and the edge.
+     * @param drawList ImGUI Draw List
+     * @param start Start pos
+     * @param end End pos
+     */
+    void draw_edge(ImDrawList* drawList, ImVec2 start, ImVec2 end);
 public:
     Graph();
     ~Graph() = default;
@@ -64,6 +73,13 @@ public:
         return nodes[node_index];
      }
      GraphNode* get_node(ImVec2 position);
+     /**
+      * Select nodes in a given area.
+      * @param p1 Point 1
+      * @param p2 Point 2
+      * @return List of nodes in the area.
+      */
+     std::vector<GraphNode*> select_nodes(ImVec2 p1, ImVec2 p2);
 
     /**
      * Get child nodes of a given node index.
@@ -78,6 +94,13 @@ public:
      */
     [[nodiscard]] ImVec2 get_text_position(int node_index);
     [[nodiscard]] static ImVec2 get_text_position(GraphNode* node) ;
+
+    /**
+     * Set Border Colour
+     */
+    void set_border_color(ImColor color) {
+        this->border_color = color;
+    }
 
     /**
      * Data pass, is for computing the position of the nodes, as well as generating the metadata struct lists.
