@@ -7,4 +7,8 @@
 struct GraphDrawnState {
     bool data_pass = false;
 };
+
+struct SelectedNodeState {
+    GraphNode* selected_node;
+};
 #endif //REGEXTOOL_STATES_H

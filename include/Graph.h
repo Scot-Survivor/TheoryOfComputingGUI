@@ -4,7 +4,7 @@
 
 #ifndef REGEXTOOL_GRAPH_H
 #define REGEXTOOL_GRAPH_H
-
+#include "CL/sycl.hpp"
 #include <vector>
 #include <algorithm>
 #include "GraphNode.h"
@@ -36,7 +36,10 @@ private:
     ImColor border_color = ImColor(0, 0, 0);
     float border_size = 4.0f;
     ImColor node_color = ImColor(255, 255, 255);
+    sycl::queue q;
 public:
+    Graph();
+    ~Graph() = default;
     /**
      * Draw the graph.
      */
@@ -53,6 +56,14 @@ public:
      */
     void add_node(GraphNode* node, const std::vector<int>& parent_nodes);
     void add_node(GraphNode* node);
+
+    /**
+     * Methods to get nodes from internal node list.
+     */
+     GraphNode* get_node(int node_index) {
+        return nodes[node_index];
+     }
+     GraphNode* get_node(ImVec2 position);
 
     /**
      * Get child nodes of a given node index.
@@ -80,6 +91,11 @@ public:
      void add_edge(EdgeData edge);
      void add_edge(int n1, int n2);
      void add_edge(const std::vector<EdgeData>& edges);
+
+     /**
+      * Get a buffer of the nodes.
+      */
+      sycl::buffer<GraphNode*> get_node_buffer();
 
 };
 

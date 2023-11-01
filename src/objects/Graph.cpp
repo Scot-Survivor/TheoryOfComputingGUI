@@ -4,6 +4,12 @@
 
 #include "Graph.h"
 
+
+Graph::Graph() {
+    this->q = sycl::queue(sycl::default_selector{});
+}
+
+
 void Graph::draw_edges(ImDrawList *drawList) {
     if (this->nodes.empty()) return;
 
@@ -134,4 +140,28 @@ void Graph::add_edge(const std::vector<EdgeData>& edges) {
     for (EdgeData edge : edges) {
         add_edge(edge);
     }
+}
+
+GraphNode *Graph::get_node(ImVec2 position) {
+    auto node_buffer = this->get_node_buffer();
+    sycl::buffer<int> ans(1);
+    ans.get_host_access()[0] = -1;
+    q.submit([&](sycl::handler &h) {
+        auto node_accessor = node_buffer.get_access<sycl::access::mode::read>(h);
+        auto ans_accessor = ans.get_access<sycl::access::mode::write>(h);
+        h.parallel_for(sycl::range<1>(node_accessor.size()), [=](sycl::id<1> idx) {
+            GraphNode* node = node_accessor[idx];
+            float distance = sqrtf(powf(node->get_position().x - position.x, 2) + powf(node->get_position().y - position.y, 2));
+            if (distance < node->get_radius()) {
+                ans_accessor[0] = (int)idx[0];
+            }
+        });
+    });
+    int idx = ans.get_host_access()[0];
+    if (idx == -1) return nullptr;
+    return nodes[idx];
+}
+
+sycl::buffer<GraphNode *> Graph::get_node_buffer() {
+    return {nodes.data(), nodes.size()};
 }

@@ -103,6 +103,7 @@ int main(int argc, char *argv[])
     graph.add_edge({{3, 0}, {1, 4}});
 
     auto graph_drawn_state = GraphDrawnState();
+    auto selected_node_state = SelectedNodeState();
     bool show_demo_window = false;
     bool show_input_array_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -125,6 +126,20 @@ int main(int argc, char *argv[])
                 done = true;
             if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
                 done = true;
+        }
+
+        if ( ImGui::IsMouseDoubleClicked( 0 ) )
+        {
+            ImVec2 pos = ImGui::GetMousePos();
+            GraphNode* node = graph.get_node(pos);
+            selected_node_state.selected_node = node;
+            if (selected_node_state.selected_node != nullptr) printf("Selected node: %s\n", node->get_label().c_str());
+        } else if (ImGui::IsMouseClicked(0) && selected_node_state.selected_node != nullptr) {
+            selected_node_state.selected_node = nullptr;
+        }
+
+        if (selected_node_state.selected_node != nullptr) {
+            selected_node_state.selected_node->set_position(ImGui::GetMousePos());
         }
 
         // Start the Dear ImGui frame
@@ -170,11 +185,6 @@ int main(int argc, char *argv[])
         graph.draw(draw_list);
 
         ImGui::End();
-
-        if ( ImGui::IsMouseDoubleClicked( 0 ) )
-        {
-            printf( "DoubleClick\n" );
-        }
 
         // Rendering
         ImGui::Render();
