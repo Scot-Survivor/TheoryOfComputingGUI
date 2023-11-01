@@ -17,6 +17,8 @@ set(CMAKE_CXX_STANDARD 17)
 add_executable(${PROJECT_NAME} src/main.cpp
         src/objects/GraphNode.cpp
         include/GraphNode.h
+        src/objects/Graph.cpp
+        include/Graph.h
 )
 # Add third party libraries.
 add_subdirectory(libs)

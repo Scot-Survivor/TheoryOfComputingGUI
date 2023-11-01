@@ -10,6 +10,7 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl2.h"
 #include "GraphNode.h"
+#include "Graph.h"
 #include <cstdio>
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -132,49 +133,29 @@ int main(int argc, char *argv[])
         }
 
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
-        GraphNode master = GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20, ImColor(255, 255, 255),
-                                     ImColor(0, 0, 0), 10, "L", 2);
+        Graph graph = Graph();
+        auto *master = new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20,  "A");
+        graph.add_node(master);
 
-        master.add_connection(
-                new GraphNode(
-                        ImVec2(ImGui::GetIO().DisplaySize.x / 2 + 60, ImGui::GetIO().DisplaySize.y / 2 - 60),
-                        20,
-                        ImColor(255, 255, 255),
-                        ImColor(0, 0, 0),
-                        10,
-                        "R",
-                        2));
-        auto child = new GraphNode(
-                ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2),
-                20,
-                ImColor(255, 255, 255),
-                ImColor(0, 0, 0),
-                10,
-                "R",
-                2);
-        child->add_connection(
-                new GraphNode(
-                        ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2),
-                        20,
-                        ImColor(255, 255, 255),
-                        ImColor(0, 0, 0),
-                        10,
-                        "R",
-                        2));
-        child->add_connection(
-                &master
-                );
-        master.add_connection(child);
-        master.add_connection(
-                new GraphNode(
-                        ImVec2(ImGui::GetIO().DisplaySize.x / 2 + 60, ImGui::GetIO().DisplaySize.y / 2 + 60),
-                        20,
-                        ImColor(255, 255, 255),
-                        ImColor(0, 0, 0),
-                        10,
-                        "R",
-                        2));
-        master.draw(draw_list);
+        graph.add_node(
+            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20, "B"),
+            {0});
+
+        graph.add_node(
+            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20, "C"),
+            {0, 1});
+
+        graph.add_node(
+            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20, "D"),
+            {0, 1, 2});
+
+        graph.add_node(
+            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), 20, "E"),
+            {2, 3});
+
+        graph.add_edge(0, 0);
+
+        graph.draw(draw_list);
         ImGui::End();
 
         // Rendering
@@ -185,7 +166,6 @@ int main(int argc, char *argv[])
         //glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context where shaders may be bound
         ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);
-        master.cascade_set_drawn(false);
     }
 
     // Cleanup
