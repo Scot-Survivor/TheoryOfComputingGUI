@@ -7,7 +7,7 @@
 
 #define PHYSICS_ITERATIONS 100
 #define MINIMUM_NODE_DISTANCE 50
-#define EDGE_LENGTH 300
+#define EDGE_LENGTH 200
 
 #include "CL/sycl.hpp"
 #include <vector>
