@@ -12,13 +12,13 @@ Graph::Graph() {
 
 void Graph::draw_edges(ImDrawList *drawList) {
     if (this->nodes.empty()) return;
-
+    int idxNode,idxCNode = 0;
     for (GraphNode* node : nodes) {
         for (GraphNode* connected_node : node->get_connected_nodes()) {
             if (node != connected_node) {
                 ImVec2 start = node->get_position();
                 ImVec2 end = connected_node->get_position();
-                draw_edge(drawList, start, end, get_edge(node, connected_node));
+                draw_edge(drawList, start, end, get_edge(idxNode, idxCNode));
             } else {
                 // Special Curve to point to itself
                 ImVec2 start = node->get_position();
@@ -34,15 +34,19 @@ void Graph::draw_edges(ImDrawList *drawList) {
                 drawList->AddBezierCubic(line_start, {x + 10, y + 10}, {x + 10, y + 10}, line_end, this->border_color, this->border_size);
             }
         }
+        idxCNode++;
     }
+    idxNode++;
 }
 
 void Graph::add_node(GraphNode *node, const std::vector<EdgeData>& parent_nodes) {
     for (EdgeData parent_node : parent_nodes) {
-        parent_node.n1 = (int)nodes.size()+1;
-        nodes[parent_node.n2]->add_connection(node);
+        parent_node.n1 = (int)nodes.size()-1;
+        parent_node.n2 = (int)nodes.size();
+        nodes[parent_node.n1]->add_connection(node);
     }
     nodes.push_back(node);
+    edges.insert(edges.end(), parent_nodes.begin(), parent_nodes.end());
 }
 
 void Graph::add_node(GraphNode *node) {
@@ -57,6 +61,27 @@ void Graph::draw(ImDrawList *drawList) {
         ImVec2 position = node->get_position();
         drawList->AddCircleFilled(position, node->get_radius(), node_color);
         drawList->AddCircle(position, node->get_radius(), border_color, 12, border_size);
+
+        if (node->get_is_start_node()) {
+            drawList->AddCircle(position, node->get_radius() - 5, border_color, 12, border_size);
+            // Off set an arrow by the radius of node since start state
+            float arrow_head_length = 10;
+            float arrow_head_angle = 0.5;
+            float arrow_head_angle_x = arrow_head_length * cosf(arrow_head_angle);
+            float arrow_head_angle_y = arrow_head_length * sinf(arrow_head_angle);
+            const float padding = (node->get_radius() - (border_size*2));
+            ImVec2 arrow_head_start = {(position.x - 2*padding) - arrow_head_angle_x, (position.y - 2*padding) - arrow_head_angle_y};
+            drawList->AddLine({position.x - padding,position.y - padding},
+                              arrow_head_start, this->border_color, this->border_size);
+            arrow_head_angle_x = arrow_head_length * cosf(arrow_head_angle);
+            arrow_head_angle_y = arrow_head_length * sinf(arrow_head_angle);
+            arrow_head_start = {(position.x - 2*padding) - arrow_head_angle_x, (position.y - 2*padding) - arrow_head_angle_y};
+            drawList->AddLine({position.x - padding,position.y - padding},
+                              arrow_head_start, this->border_color, this->border_size);
+        }
+        if (node->get_is_final_node()) {
+            drawList->AddCircle(position, node->get_radius() - 5, border_color, 12, border_size);
+        }
 
         font = ImGui::GetFont();
         float old_size = font->Scale;
@@ -182,8 +207,6 @@ void Graph::draw_edge(ImDrawList *drawList, ImVec2 start, ImVec2 end, EdgeData e
     float line_length_y = line_length * sinf(angle);
     ImVec2 line_start = {start.x + (root_node->get_radius() * cosf(angle)), start.y + (root_node->get_radius() * sinf(angle))};
     ImVec2 line_end = {line_start.x + line_length_x, line_start.y + line_length_y};
-    edgeData.p1 = line_start;
-    edgeData.p2 = line_end;
     drawList->AddLine(line_start, line_end, this->border_color, this->border_size);
 
 
@@ -192,7 +215,9 @@ void Graph::draw_edge(ImDrawList *drawList, ImVec2 start, ImVec2 end, EdgeData e
     if (text_size.y == 0) text_size.y = 1; // Avoid zero-division.
     if (text_size.y > line_length) text_size.y = line_length;
     ImVec2 text_pos = {line_start.x + (line_length_x / 2) - (text_size.x / 2), line_start.y + (line_length_y / 2) - (text_size.y / 2)};
-    drawList->AddText(text_pos, ImColor(0, 0, 0), edgeData.label.c_str());
+    // drawList->AddText(text_pos, ImColor(0, 0, 0), edgeData.label.c_str());
+    ImGui::SetCursorPos(text_pos);
+    ImGui::Text(edgeData.label.c_str(), nullptr, true);
 
 
     // Add arrow head parts
@@ -215,10 +240,10 @@ EdgeData Graph::get_edge(int n1, int n2) {
             return edge;
         }
     }
-    return {{}, {}, "", -1, -1};
+    return {"", -1, -1};
 }
 
 EdgeData Graph::get_edge(GraphNode *n1, GraphNode *n2) {
-    return get_edge(std::distance(nodes.begin(), std::find(nodes.begin(), nodes.end(), n1)),
-                    std::distance(nodes.begin(), std::find(nodes.begin(), nodes.end(), n2)));
+    return get_edge((int) (nodes.begin() - std::find(nodes.begin(), nodes.end(), n1)),
+                    (int) (nodes.begin() - std::find(nodes.begin(), nodes.end(), n2)));
 }

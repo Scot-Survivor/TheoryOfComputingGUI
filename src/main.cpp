@@ -83,28 +83,28 @@ int main(int argc, char *argv[])
     // Our state
     Graph graph = Graph();
     float node_radius = 20;
-    auto *master = new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius,  "A");
+    auto *master = new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius,  "A", true);
     graph.add_node(master);
 
     graph.add_node(
             new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "B"),
-            {0});
+            {{"T", 0, 1}});
 
     graph.add_node(
             new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "C"),
-            {0, 1});
+            {{"T", 0, 2}, {"T", 1, 2}});
 
     graph.add_node(
             new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "D"),
-            {0, 1, 2});
+            {{"T", 0, 3}, {"T", 1, 3}, {"T", 2, 3}});
 
     graph.add_node(
             new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "E"),
-            {2, 3});
+            {{"T", 2, 4}, {"T", 3, 4}});
     graph.add_node(
-            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "F"),
-            {3});
-    graph.add_edge({{3, 0}, {1, 4}});
+            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "F", false, true),
+            {{"T", 3, 5}});
+    graph.add_edge({{"", 3, 0}, {"", 1, 4}});
 
     auto graph_drawn_state = GraphDrawnState();
     auto selected_node_state = SelectedNodeState();

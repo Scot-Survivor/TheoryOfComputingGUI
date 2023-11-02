@@ -14,7 +14,6 @@
  * EdgeData
  */
 struct EdgeData {
-    ImVec2 p1, p2;  // Edge points
     std::string label;  // Edge label
     int n1, n2;  // Connecting nodes
 };

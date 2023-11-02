@@ -23,8 +23,13 @@ private:
     float radius;
     std::string label;
     std::vector<GraphNode*> connected_nodes;
+    bool is_start_node = false;
+    bool is_final_node = false;
 public:
     GraphNode(ImVec2 position, float radius, std::string label);
+    GraphNode(ImVec2 position, float radius, std::string label, bool is_start_node);
+    GraphNode(ImVec2 position, float radius, std::string label, bool is_start_node, bool is_final_node);
+    ~GraphNode() = default;
 
 
     [[nodiscard]] ImVec2 get_position() const { return position; }
@@ -33,9 +38,11 @@ public:
 
     [[nodiscard]] float get_radius() const { return radius; }
     [[nodiscard]] std::string get_label() const { return label; }
+    [[nodiscard]] bool get_is_start_node() const { return is_start_node; }
+    [[nodiscard]] bool get_is_final_node() const { return is_final_node; }
 
     void add_connection(GraphNode* node) {
-        if (std::find(connected_nodes.begin(), connected_nodes.end(), node) == connected_nodes.end() && node != this) {
+        if (std::find(connected_nodes.begin(), connected_nodes.end( ), node) == connected_nodes.end() && node != this) {
             connected_nodes.push_back(node);
         }
     }
