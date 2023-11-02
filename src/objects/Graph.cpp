@@ -77,7 +77,7 @@ void Graph::draw(ImDrawList *drawList) {
             arrow_head_angle_y = arrow_head_length * sinf(arrow_head_angle);
             arrow_head_start = {(position.x - 2*padding) - arrow_head_angle_x, (position.y - 2*padding) - arrow_head_angle_y};
             drawList->AddLine({position.x - padding,position.y - padding},
-                              arrow_head_start, this->border_color, this->border_size);
+                              arrow_head_start, ImColor(0, 0 ,220), this->border_size);
         }
         if (node->get_is_final_node()) {
             drawList->AddCircle(position, node->get_radius() - 5, border_color, 12, border_size);
@@ -114,6 +114,8 @@ void Graph::data_pass() {
     float height = ImGui::GetIO().DisplaySize.y;
     root_node->set_position({width / 2, height / 2});  // Bind to center screen.
     if (!root_node->get_is_pinned()) root_node->toggle_is_pinned();
+    sycl::buffer<GraphNode*> node_buffer = this->get_node_buffer();
+    sycl::buffer<EdgeData> edge_buffer = this->get_edge_buffer();
     for (int i = 0; i <= PHYSICS_ITERATIONS; i ++) {
         for (GraphNode* node : nodes) {
             if (node->get_is_pinned()) continue;
@@ -126,33 +128,8 @@ void Graph::data_pass() {
             dx *= force;
             dy *= force;
             node->set_position({node->get_position().x + dx, node->get_position().y + dy});
-            for (GraphNode* other_node : nodes) {
-                if (other_node == node || other_node->get_is_pinned()) continue;
-                dx = node->get_position().x - other_node->get_position().x;
-                dy = node->get_position().y - other_node->get_position().y;
-                dist = sqrtf(dx * dx + dy * dy);
-                if (dist < MINIMUM_NODE_DISTANCE) {
-                    force = (MINIMUM_NODE_DISTANCE - dist) / (dist / 2);
-                    dx *= force;
-                    dy *= force;
-                    node->set_position({node->get_position().x + dx, node->get_position().y + dy});
-                }
-            }
-
-            for (const EdgeData& edge : edges) {
-                GraphNode* begin = nodes[edge.n1];
-                GraphNode* end = nodes[edge.n2];
-                if (begin->get_is_pinned() && end->get_is_pinned()) continue;
-                dx = end->get_position().x - begin->get_position().x;
-                dy = end->get_position().y - begin->get_position().y;
-                dist = sqrtf(dx * dx + dy * dy);
-                if (dist == 0) continue;
-                force = (dist - EDGE_LENGTH) / dist / (dist / 2);
-                dx *= force;
-                dy *= force;
-                if (!begin->get_is_pinned()) begin->set_position({begin->get_position().x + dx, begin->get_position().y + dy});
-                if (!end->get_is_pinned()) end->set_position({end->get_position().x - dx, end->get_position().y - dy});
-            }
+            this->sycl_node_data_pass(node, node_buffer);
+            this->sycl_edge_data_pass(edge_buffer, node_buffer);
 
             ImVec2 pos = node->get_position();
             pos.x = std::clamp(pos.x, node->get_radius(), width - node->get_radius());
@@ -160,6 +137,47 @@ void Graph::data_pass() {
             node->set_position(pos);
         }
     }
+}
+
+void Graph::sycl_node_data_pass(GraphNode* node, sycl::buffer<GraphNode*> node_buffer) {
+    q.submit([&](sycl::handler &h) {
+        auto node_accessor = node_buffer.get_access<sycl::access::mode::read_write>(h);
+        h.parallel_for(sycl::range<1>(node_accessor.size()), [=](sycl::id<1> idx) {
+            GraphNode* other_node = node_accessor[idx];
+            if (other_node == node || other_node->get_is_pinned()) return;
+            float dx = node->get_position().x - other_node->get_position().x;
+            float dy = node->get_position().y - other_node->get_position().y;
+            float dist = sqrtf(dx * dx + dy * dy);
+            if (dist < MINIMUM_NODE_DISTANCE) {
+                float force = (MINIMUM_NODE_DISTANCE - dist) / (dist / 2);
+                dx *= force;
+                dy *= force;
+                node->set_position({node->get_position().x + dx, node->get_position().y + dy});
+            }
+        });
+    });
+}
+
+void Graph::sycl_edge_data_pass(sycl::buffer<EdgeData> edge_buffer, sycl::buffer<GraphNode*> node_buffer) {
+    q.submit([&](sycl::handler &h) {
+        auto edge_accessor = edge_buffer.get_access<sycl::access::mode::read_write>(h);
+        auto node_accessor = node_buffer.get_access<sycl::access::mode::read_write>(h);
+        h.parallel_for(sycl::range<1>(edge_accessor.size()), [=](sycl::id<1> idx) {
+            EdgeData edge = edge_accessor[idx];
+            GraphNode* begin = node_accessor[edge.n1];
+            GraphNode* end = node_accessor[edge.n2];
+            if (begin->get_is_pinned() && end->get_is_pinned()) return;
+            float dx = end->get_position().x - begin->get_position().x;
+            float dy = end->get_position().y - begin->get_position().y;
+            float dist = sqrtf(dx * dx + dy * dy);
+            if (dist == 0) return;
+            float force = (dist - EDGE_LENGTH) / dist / (dist / 2);
+            dx *= force;
+            dy *= force;
+            if (!begin->get_is_pinned()) begin->set_position({begin->get_position().x + dx, begin->get_position().y + dy});
+            if (!end->get_is_pinned()) end->set_position({end->get_position().x - dx, end->get_position().y - dy});
+        });
+    });
 }
 
 void Graph::add_edge(const EdgeData& edge) {
@@ -195,6 +213,10 @@ GraphNode *Graph::get_node(ImVec2 position) {
 
 sycl::buffer<GraphNode *> Graph::get_node_buffer() {
     return {nodes.data(), nodes.size()};
+}
+
+sycl::buffer<EdgeData> Graph::get_edge_buffer() {
+    return {edges.data(), edges.size()};
 }
 
 std::vector<GraphNode *> Graph::select_nodes(ImVec2 p1, ImVec2 p2) {

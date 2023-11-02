@@ -57,6 +57,9 @@ private:
      */
     EdgeData get_edge(GraphNode* n1, GraphNode* n2);
     EdgeData get_edge(int n1, int n2);
+
+    void sycl_node_data_pass(GraphNode* node, sycl::buffer<GraphNode*> node_buffer);
+    void sycl_edge_data_pass(sycl::buffer<EdgeData> edge_buffer, sycl::buffer<GraphNode*> node_buffer);
 public:
     Graph();
     ~Graph() = default;
@@ -129,6 +132,11 @@ public:
       * Get a buffer of the nodes.
       */
       sycl::buffer<GraphNode*> get_node_buffer();
+
+      /**
+       * Get buffer of the edges
+       */
+       sycl::buffer<EdgeData> get_edge_buffer();
 
       /**
        * Clear the graph.
