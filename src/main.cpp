@@ -151,15 +151,21 @@ int main(int argc, char *argv[])
                                                      ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBackground);
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
-
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
         if (ImGui::BeginMenuBar()) {
             if (ImGui::BeginMenu("Options")) {
                 ImGui::MenuItem("Show Demo Window", nullptr, &window_state.show_demo_window);
                 ImGui::MenuItem("Show Regex Creation", nullptr, &window_state.regex_creator);
                 ImGui::EndMenu();
             }
+            if(ImGui::Button("Re-Draw Graph", ImVec2(ImGui::GetWindowWidth() - 100, 0))) {
+                graph_drawn_state.data_pass = false;
+            }
             ImGui::EndMenuBar();
         }
+        ImGui::PopStyleVar();
+        ImGui::PopStyleVar();
 
 
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
