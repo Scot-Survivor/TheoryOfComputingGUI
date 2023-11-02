@@ -5,7 +5,6 @@
 #ifndef REGEXTOOL_GRAPHNODE_H
 #define REGEXTOOL_GRAPHNODE_H
 
-#define ITERATIONS 1000
 #include <string>
 #include <utility>
 #include <vector>
@@ -25,6 +24,7 @@ private:
     std::vector<GraphNode*> connected_nodes;
     bool is_start_node = false;
     bool is_final_node = false;
+    bool is_pinned = false;
 public:
     GraphNode(ImVec2 position, float radius, std::string label);
     GraphNode(ImVec2 position, float radius, std::string label, bool is_start_node);
@@ -40,15 +40,15 @@ public:
     [[nodiscard]] std::string get_label() const { return label; }
     [[nodiscard]] bool get_is_start_node() const { return is_start_node; }
     [[nodiscard]] bool get_is_final_node() const { return is_final_node; }
+    [[nodiscard]] std::vector<GraphNode*> get_connected_nodes() const { return connected_nodes; }
+    [[nodiscard]] bool get_is_pinned() const { return is_pinned; }
+
+    void toggle_is_pinned() { is_pinned = !is_pinned; }
 
     void add_connection(GraphNode* node) {
         if (std::find(connected_nodes.begin(), connected_nodes.end( ), node) == connected_nodes.end() && node != this) {
             connected_nodes.push_back(node);
         }
-    }
-
-    [[nodiscard]] std::vector<GraphNode*> get_connected_nodes() const {
-        return connected_nodes;
     }
 };
 #endif //REGEXTOOL_GRAPHNODE_H

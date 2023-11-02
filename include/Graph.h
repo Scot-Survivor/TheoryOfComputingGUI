@@ -4,6 +4,11 @@
 
 #ifndef REGEXTOOL_GRAPH_H
 #define REGEXTOOL_GRAPH_H
+
+#define PHYSICS_ITERATIONS 100
+#define MINIMUM_NODE_DISTANCE 50
+#define EDGE_LENGTH 300
+
 #include "CL/sycl.hpp"
 #include <vector>
 #include <algorithm>

@@ -110,38 +110,54 @@ ImVec2 Graph::get_text_position(GraphNode *node) {
 }
 
 void Graph::data_pass() {
-    // Place nodes around the circle.
-    size_t num_nodes = nodes.size();
-    if (num_nodes == 0) {
-        return;
-    }
-    float padding = border_size / 2;
-    float angle = 0;
-    float angle_increment = (2 * (float)M_PI) / (float)num_nodes;
+    float width = ImGui::GetIO().DisplaySize.x;
+    float height = ImGui::GetIO().DisplaySize.y;
+    root_node->set_position({width / 2, height / 2});  // Bind to center screen.
+    if (!root_node->get_is_pinned()) root_node->toggle_is_pinned();
+    for (int i = 0; i <= PHYSICS_ITERATIONS; i ++) {
+        for (GraphNode* node : nodes) {
+            if (node->get_is_pinned()) continue;
 
-    std::vector<GraphNode*> seen_nodes;
-    for (GraphNode* node : nodes) {
-        for (GraphNode* connected_node : node->get_connected_nodes()) {
-            if (std::find(seen_nodes.begin(), seen_nodes.end(), connected_node) != seen_nodes.end()) continue;
-            seen_nodes.push_back(connected_node);
-            float x = node->get_position().x + ((node->get_radius() + connected_node->get_radius()) * padding * cosf(angle));
-            float y = node->get_position().y + ((node->get_radius() + connected_node->get_radius()) * padding * sinf(angle));
-            connected_node->set_position({x, y});
-            angle += angle_increment;
-        }
-    }
-
-    // Check and move nodes that are too close to each other.
-    for (GraphNode* node : nodes) {
-        for (GraphNode* connected_node : node->get_connected_nodes()) {
-            if (node == connected_node) continue;
-            float distance = sqrtf(powf(node->get_position().x - connected_node->get_position().x, 2) + powf(node->get_position().y - connected_node->get_position().y, 2));
-            if (distance < (node->get_radius() + connected_node->get_radius()) * padding) {
-                float x = node->get_position().x + ((node->get_radius() + connected_node->get_radius()) * padding * cosf(angle));
-                float y = node->get_position().y + ((node->get_radius() + connected_node->get_radius()) * padding * sinf(angle));
-                connected_node->set_position({x, y});
-                angle += angle_increment;
+            float dx = node->get_position().x - width / 2;
+            float dy = node->get_position().y - height / 2;
+            float dist = sqrtf(dx * dx + dy * dy);
+            if (dist == 0) continue;
+            float force = 1 / dist * 0.3;
+            dx *= force;
+            dy *= force;
+            node->set_position({node->get_position().x + dx, node->get_position().y + dy});
+            for (GraphNode* other_node : nodes) {
+                if (other_node == node || other_node->get_is_pinned()) continue;
+                dx = node->get_position().x - other_node->get_position().x;
+                dy = node->get_position().y - other_node->get_position().y;
+                dist = sqrtf(dx * dx + dy * dy);
+                if (dist < MINIMUM_NODE_DISTANCE) {
+                    force = (MINIMUM_NODE_DISTANCE - dist) / (dist / 2);
+                    dx *= force;
+                    dy *= force;
+                    node->set_position({node->get_position().x + dx, node->get_position().y + dy});
+                }
             }
+
+            for (const EdgeData& edge : edges) {
+                GraphNode* begin = nodes[edge.n1];
+                GraphNode* end = nodes[edge.n2];
+                if (begin->get_is_pinned() && end->get_is_pinned()) continue;
+                dx = end->get_position().x - begin->get_position().x;
+                dy = end->get_position().y - begin->get_position().y;
+                dist = sqrtf(dx * dx + dy * dy);
+                if (dist == 0) continue;
+                force = (dist - EDGE_LENGTH) / dist / (dist / 2);
+                dx *= force;
+                dy *= force;
+                if (!begin->get_is_pinned()) begin->set_position({begin->get_position().x + dx, begin->get_position().y + dy});
+                if (!end->get_is_pinned()) end->set_position({end->get_position().x - dx, end->get_position().y - dy});
+            }
+
+            ImVec2 pos = node->get_position();
+            pos.x = std::clamp(pos.x, node->get_radius(), width - node->get_radius());
+            pos.y = std::clamp(pos.y, node->get_radius(), height - node->get_radius());
+            node->set_position(pos);
         }
     }
 }
