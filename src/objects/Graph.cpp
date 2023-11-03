@@ -6,7 +6,7 @@
 
 
 Graph::Graph() {
-    this->q = sycl::queue(sycl::default_selector{});
+    this->q = sycl::queue(sycl::default_selector_v);
 }
 
 
@@ -147,7 +147,7 @@ void Graph::sycl_node_data_pass(GraphNode* node, sycl::buffer<GraphNode*> node_b
             if (other_node == node || other_node->get_is_pinned()) return;
             float dx = node->get_position().x - other_node->get_position().x;
             float dy = node->get_position().y - other_node->get_position().y;
-            float dist = sqrtf(dx * dx + dy * dy);
+            float dist = sycl::sqrt(dx * dx + dy * dy);
             if (dist < MINIMUM_NODE_DISTANCE) {
                 float force = (MINIMUM_NODE_DISTANCE - dist) / (dist / 2);
                 dx *= force;
@@ -169,9 +169,9 @@ void Graph::sycl_edge_data_pass(sycl::buffer<EdgeData> edge_buffer, sycl::buffer
             if (begin->get_is_pinned() && end->get_is_pinned()) return;
             float dx = end->get_position().x - begin->get_position().x;
             float dy = end->get_position().y - begin->get_position().y;
-            float dist = sqrtf(dx * dx + dy * dy);
+            float dist = sycl::sqrt(dx * dx + dy * dy);
             if (dist == 0) return;
-            float force = (dist - EDGE_LENGTH) / dist / (dist / 2);
+            float force = 2 * (dist - EDGE_LENGTH) * sycl::pown(dist, -2);
             dx *= force;
             dy *= force;
             if (!begin->get_is_pinned()) begin->set_position({begin->get_position().x + dx, begin->get_position().y + dy});
@@ -284,4 +284,8 @@ EdgeData Graph::get_edge(int n1, int n2) {
 EdgeData Graph::get_edge(GraphNode *n1, GraphNode *n2) {
     return get_edge((int) (nodes.begin() - std::find(nodes.begin(), nodes.end(), n1)),
                     (int) (nodes.begin() - std::find(nodes.begin(), nodes.end(), n2)));
+}
+
+int Graph::get_node_index(GraphNode *node) {
+    return (int) (nodes.begin() - std::find(nodes.begin(), nodes.end(), node));
 }
