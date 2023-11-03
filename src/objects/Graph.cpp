@@ -12,13 +12,18 @@ Graph::Graph() {
 
 void Graph::draw_edges(ImDrawList *drawList) {
     if (this->nodes.empty()) return;
-    int idxNode,idxCNode = 0;
     for (GraphNode* node : nodes) {
+        int nodeIdx = this->get_node_index(node);
         for (GraphNode* connected_node : node->get_connected_nodes()) {
+            int cNodeIdx = this->get_node_index(connected_node);
+            if (cNodeIdx == -1) {
+                std::cerr << "Warning Child Node not found in list." << std::endl;
+                continue;
+            }
             if (node != connected_node) {
                 ImVec2 start = node->get_position();
                 ImVec2 end = connected_node->get_position();
-                draw_edge(drawList, start, end, get_edge(idxNode, idxCNode));
+                draw_edge(drawList, start, end, get_edge(nodeIdx, cNodeIdx));
             } else {
                 // Special Curve to point to itself
                 ImVec2 start = node->get_position();
@@ -34,24 +39,35 @@ void Graph::draw_edges(ImDrawList *drawList) {
                 drawList->AddBezierCubic(line_start, {x + 10, y + 10}, {x + 10, y + 10}, line_end, this->border_color, this->border_size);
             }
         }
-        idxCNode++;
     }
-    idxNode++;
 }
 
 void Graph::add_node(GraphNode *node, const std::vector<EdgeData>& parent_nodes) {
     for (EdgeData parent_node : parent_nodes) {
-        parent_node.n1 = (int)nodes.size()-1;
-        parent_node.n2 = (int)nodes.size();
+        parent_node.n2 = nodes.size();
         nodes[parent_node.n1]->add_connection(node);
+        edges.push_back(parent_node);
     }
     nodes.push_back(node);
-    edges.insert(edges.end(), parent_nodes.begin(), parent_nodes.end());
+    // edges.insert(edges.end(), parent_nodes.begin(), parent_nodes.end());
 }
 
 void Graph::add_node(GraphNode *node) {
     if (this->nodes.empty()) root_node = node;
     nodes.push_back(node);
+    if (!node->get_connected_nodes().empty()) {
+        // Build edge data from connected nodes
+        std::vector<EdgeData> edge_data;
+        int nodeIdx = nodes.size()-1;  // +1 once the node is added later
+        for (GraphNode* connected_node : node->get_connected_nodes()) {
+            int connected_node_idx = get_node_index(connected_node);
+            if (connected_node_idx == -1) {
+                nodes.push_back(connected_node);
+                connected_node_idx = nodes.size()-1;
+            };
+            edge_data.push_back({node->get_label(), nodeIdx, connected_node_idx});
+        }
+    }
 }
 
 void Graph::draw(ImDrawList *drawList) {
@@ -287,5 +303,8 @@ EdgeData Graph::get_edge(GraphNode *n1, GraphNode *n2) {
 }
 
 int Graph::get_node_index(GraphNode *node) {
-    return (int) (nodes.begin() - std::find(nodes.begin(), nodes.end(), node));
+    for (int i = 0; i < nodes.size(); i++) {
+        if (node == nodes.at(i)) return i;
+    }
+    return -1;
 }
