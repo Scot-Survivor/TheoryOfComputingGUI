@@ -12,6 +12,7 @@
 #include "GraphNode.h"
 #include "Graph.h"
 #include "States.h"
+#include "Converter.h"
 #include <cstdio>
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -77,34 +78,39 @@ int main(int argc, char *argv[])
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-    //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
-    //IM_ASSERT(font != nullptr);
+    ImWchar ranges[] = {
+            0x0020, 0x00FF, // Basic Latin + Latin Supplement
+            0x0250, 0x02AF, // IPA Extensions
+            0
+    };
+    ImFont* font = io.Fonts->AddFontFromFileTTF("./assets/fonts/LeedsUni.ttf", 18.0f, nullptr, ranges);
+    IM_ASSERT(font != nullptr);
 
     // Our state
     Graph graph = Graph();
-    float node_radius = 20;
-    auto *master = new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius,  "A", true);
+    float node_radius = 50;
+    /* auto *master = new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius,  "A(B|C)D", true);
     graph.add_node(master);
 
     graph.add_node(
-            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "B"),
-            {{"T", 0, 1}});
+            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "(B|C)D"),
+            {{"A", 0, 1}});
 
     graph.add_node(
-            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "C"),
-            {{"T", 0, 2}, {"T", 1, 2}});
+            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "BD"),
+            {{"ɛ", 1, 2}});
+
+    graph.add_node(
+            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "CD"),
+            {{"ɛ", 1, 3}});
 
     graph.add_node(
             new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "D"),
-            {{"T", 0, 3}, {"T", 1, 3}, {"T", 2, 3}});
-
+            {{"B", 2, 4}, {"C", 3, 4}});
     graph.add_node(
-            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "E"),
-            {{"T", 2, 4}, {"T", 3, 4}});
-    graph.add_node(
-            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "F", false, true),
-            {{"T", 3, 5}});
-    graph.add_edge({{"", 3, 0}, {"", 1, 4}});
+            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "ɛ", false, true),
+            {{"D", 4, 5}}); */
+    graph = Converter::convert_regex_to_nfa("A|B");
 
     auto graph_drawn_state = GraphDrawnState();
     auto selected_node_state = SelectedNodeState();
@@ -188,10 +194,6 @@ int main(int argc, char *argv[])
 
 
         if (!graph_drawn_state.data_pass) {
-            master->set_position({
-                                         ImGui::GetIO().DisplaySize.x / 2,
-                                         ImGui::GetIO().DisplaySize.y / 2
-                                 });
             graph.data_pass();
             graph_drawn_state.data_pass = true;
         }
