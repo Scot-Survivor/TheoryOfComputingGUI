@@ -10,6 +10,7 @@
 #define EDGE_LENGTH 200
 
 #include "CL/sycl.hpp"
+#include "dpc_common.hpp"
 #include <vector>
 #include <algorithm>
 #include <string>
@@ -34,7 +35,7 @@ private:
     std::vector<EdgeData> edges;
     GraphNode *root_node;
     ImFont *font;
-    float font_scale = 2.0f;
+    float font_scale = 1.0f;
     ImColor border_color = ImColor(0, 0, 0);
     float border_size = 4.0f;
     ImColor node_color = ImColor(255, 255, 255);
@@ -87,6 +88,12 @@ public:
         return nodes[node_index];
      }
      GraphNode* get_node(ImVec2 position);
+
+     /**
+      * Get the index of a given node.
+      */
+     int get_node_index(GraphNode* node);
+
      /**
       * Select nodes in a given area.
       * @param p1 Point 1
@@ -144,6 +151,13 @@ public:
       void clear() {
           nodes.clear();
       }
+
+      /**
+       * Return size of nodes.
+       */
+      int size() {
+            return nodes.size();
+        }
 
 };
 
