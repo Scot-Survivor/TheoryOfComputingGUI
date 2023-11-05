@@ -13,6 +13,7 @@
 #include "Graph.h"
 #include "States.h"
 #include "Converter.h"
+#include "AST.h"
 #include <cstdio>
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -85,6 +86,8 @@ int main(int argc, char *argv[])
     };
     ImFont* font = io.Fonts->AddFontFromFileTTF("./assets/fonts/LeedsUni.ttf", 18.0f, nullptr, ranges);
     IM_ASSERT(font != nullptr);
+
+    auto ast = AST::parse("A(BC)D");
 
     // Our state
     Graph graph = Graph();
