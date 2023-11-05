@@ -55,8 +55,8 @@ std::vector<ASTNode> AST::parse(std::string regex) {
                         if (old_i == i) throw std::runtime_error("Invalid Regex");
                         group_node = ASTNode(ASTType::GROUP);
                         group_ast = parse(group);
-                        for (int j = 0; j < group_ast.size(); j++) {
-                            group_node.children.push_back(group_ast[j]);
+                        for (const auto & j : group_ast) {
+                            group_node.children.push_back(j);
                         }
                         node.children.push_back(group_node);
                     }
@@ -74,8 +74,8 @@ std::vector<ASTNode> AST::parse(std::string regex) {
                 }
                 group_ast = parse(group);
                 group_node = ASTNode(ASTType::GROUP);
-                for (int j = 0; j < group_ast.size(); j++) {
-                    group_node.children.push_back(group_ast[j]);
+                for (const auto & j : group_ast) {
+                    group_node.children.push_back(j);
                 }
                 node_stack.emplace(group_node);
                 break;
