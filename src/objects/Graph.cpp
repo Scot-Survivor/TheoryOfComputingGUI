@@ -1,7 +1,7 @@
 //
 // Created by scot on 01/11/23.
 //
-
+#define _USE_MATH_DEFINES
 #include "Graph.h"
 
 
