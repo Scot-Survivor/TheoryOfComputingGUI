@@ -70,6 +70,50 @@ void Graph::add_node(GraphNode *node) {
     }
 }
 
+void Graph::add_nodes(const std::vector<GraphNode*>& nodes)
+{
+    for (const auto node: nodes)
+    {
+        add_node(node);
+    }
+}
+
+GraphNode* Graph::get_start_node()
+{
+    for (auto node: nodes)
+    {
+        if (node->get_is_start_node()) return node;
+    }
+}
+
+GraphNode* Graph::get_final_node()
+{
+    for (auto node: nodes)
+    {
+        if (node->get_is_final_node()) return node;
+    }
+}
+
+void Graph::merge(Graph& other)
+{
+    // Add all nodes from 'other' to this graph
+    for (auto node : other.nodes) {
+        if (!this->has_node(node)) {
+            this->add_node(node); // Deep copy
+        }
+    }
+    // Add all edges from 'other' to this graph
+    for (const auto& edge : other.edges) {
+        this->add_edge(EdgeData{edge.label, get_node_index(other.nodes[edge.n1]),
+            get_node_index(other.nodes[edge.n2])});
+    }
+}
+
+bool Graph::has_node(GraphNode* node)
+{
+    return std::find(nodes.begin(), nodes.end(), node) != nodes.end();
+}
+
 void Graph::draw(ImDrawList *drawList) {
     this->draw_edges(drawList);
     for (GraphNode* node : nodes) {
@@ -207,6 +251,11 @@ void Graph::add_edge(const std::vector<EdgeData>& p_edges) {
     }
 }
 
+void Graph::add_edge(std::string label, GraphNode* n1, GraphNode* n2)
+{
+    add_edge(EdgeData{label, get_node_index(n1), get_node_index(n2)});
+}
+
 GraphNode *Graph::get_node(ImVec2 position) {
     auto node_buffer = this->get_node_buffer();
     sycl::buffer<int> ans(1);
@@ -227,12 +276,28 @@ GraphNode *Graph::get_node(ImVec2 position) {
     return nodes[idx];
 }
 
+GraphNode* Graph::get_last_node() const
+{
+    return nodes.back();
+}
+
 sycl::buffer<GraphNode *> Graph::get_node_buffer() {
     return {nodes.data(), nodes.size()};
 }
 
 sycl::buffer<EdgeData> Graph::get_edge_buffer() {
     return {edges.data(), edges.size()};
+}
+
+std::vector<GraphNode*> Graph::get_childless_nodes()
+{
+    std::vector<GraphNode*> childless;
+    for (GraphNode* node : nodes) {
+        if (node->get_connected_nodes().empty()) {
+            childless.push_back(node);
+        }
+    }
+    return childless;
 }
 
 std::vector<GraphNode *> Graph::select_nodes(ImVec2 p1, ImVec2 p2) {

@@ -4,6 +4,7 @@
 
 #ifndef REGEXTOOL_AST_H
 #define REGEXTOOL_AST_H
+#define _EPSILON "ɛ"
 #include <vector>
 #include <string>
 #include <stack>

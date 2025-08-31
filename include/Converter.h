@@ -14,10 +14,9 @@
  * This convertor class will convert Regex to NFA, NFA to DFA, and DFA to Regex.
  */
 namespace Converter {
-    static std::string shunting_yard(const std::string& regex);
-    static Graph convert_regex_to_nfa(std::vector<ASTNode> regex, std::string regex_string);
-    static Graph convert_nfa_to_dfa(Graph nfa);
-    static std::string convert_dfa_to_regex(Graph dfa);
+    std::string shunting_yard(const std::string& regex);
+    Graph convert_regex_to_nfa(const std::string& regex);
+    void calculate_labels(Graph& graph, const std::string& regex);
 
 };
 

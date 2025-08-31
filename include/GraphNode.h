@@ -4,6 +4,7 @@
 
 #ifndef REGEXTOOL_GRAPHNODE_H
 #define REGEXTOOL_GRAPHNODE_H
+#define DEFAULT_NODE_SIZE 50
 
 #include <string>
 #include <utility>
@@ -26,9 +27,11 @@ private:
     bool is_final_node = false;
     bool is_pinned = false;
 public:
+    GraphNode(std::string label, bool is_start_node, bool is_final_node);
     GraphNode(ImVec2 position, float radius, std::string label);
     GraphNode(ImVec2 position, float radius, std::string label, bool is_start_node);
     GraphNode(ImVec2 position, float radius, std::string label, bool is_start_node, bool is_final_node);
+    explicit GraphNode(const std::string& string);
     ~GraphNode() = default;
 
 
@@ -44,6 +47,8 @@ public:
     [[nodiscard]] bool get_is_pinned() const { return is_pinned; }
 
     void toggle_is_pinned() { is_pinned = !is_pinned; }
+    void toggle_is_start_node() { is_start_node = !is_start_node; }
+    void toggle_is_final_node() { is_final_node = !is_final_node; }
 
     void add_connection(GraphNode* node) {
         if (std::find(connected_nodes.begin(), connected_nodes.end( ), node) == connected_nodes.end() && node != this) {
