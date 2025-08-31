@@ -4,7 +4,7 @@
 
 #include "AST.h"
 
-ASTType AST::get_type(char c) {
+ASTType AST::get_type(const char c) {
     switch (c) {
         case '*':
             return ASTType::KLEENE_STAR;

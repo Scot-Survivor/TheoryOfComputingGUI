@@ -8,16 +8,25 @@
 #include <string>
 #include <stack>
 #include <stdexcept>
+#include <unordered_map>
 
 
 enum class ASTType {
-    KLEENE_STAR,
-    PIPE_OR,
-    GROUP,
-    GROUP_OPEN,
-    GROUP_CLOSE,
-    LITERAL,
-    EMPTY
+    KLEENE_STAR, // *
+    PIPE_OR, // |
+    GROUP, // ()
+    GROUP_OPEN, // (
+    GROUP_CLOSE, // )
+    LITERAL, // a-z, A-Z, 0-9
+    EMPTY // ɛ
+};
+
+const static std::unordered_map<ASTType, int> ASTPrecedence = {
+        {ASTType::KLEENE_STAR, 3},
+        {ASTType::PIPE_OR, 1},
+        {ASTType::GROUP, 2},
+        {ASTType::LITERAL, 4},
+        {ASTType::EMPTY, 5}
 };
 
 struct ASTNode {
@@ -29,10 +38,9 @@ struct ASTNode {
     explicit ASTNode(char literal) : type(ASTType::LITERAL), literal(literal) {};
 };
 
-class AST {
-public:
-    static ASTType get_type(char c);
-    static std::vector<ASTNode> parse(std::string regex);
+namespace AST {
+    ASTType get_type(char c);
+     std::vector<ASTNode> parse(std::string regex);
 };
 
 
