@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-    SDL_Window* window = SDL_CreateWindow("NeuralNetworkSim", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
+    SDL_Window* window = SDL_CreateWindow("Theory of Computing", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
     SDL_GLContext gl_context = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, gl_context);
     SDL_GL_SetSwapInterval(0); // Disable vsync
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
     // Our state
     Graph graph = Graph();
     float node_radius = 50;
-    /* auto *master = new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius,  "A(B|C)D", true);
+    auto *master = new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius,  "A(B|C)D", true);
     graph.add_node(master);
 
     graph.add_node(
@@ -112,8 +112,8 @@ int main(int argc, char *argv[])
             {{"B", 2, 4}, {"C", 3, 4}});
     graph.add_node(
             new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "ɛ", false, true),
-            {{"D", 4, 5}}); */
-    graph = Converter::convert_regex_to_nfa("A|B");
+            {{"D", 4, 5}});
+    graph = Converter::convert_regex_to_nfa("A*(ABC)");
 
     auto graph_drawn_state = GraphDrawnState();
     auto selected_node_state = SelectedNodeState();
@@ -176,8 +176,6 @@ int main(int argc, char *argv[])
         ImGui::PopStyleVar();
         ImGui::PopStyleVar();
 
-
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (window_state.show_demo_window)
             ImGui::ShowDemoWindow(&window_state.show_demo_window);
 
@@ -226,7 +224,8 @@ int main(int argc, char *argv[])
             if (!selected_node_state.is_box_selecting && selected_node_state.has_box_selected) {
                 selected_node_state.start_pos = ImGui::GetMousePos();
                 selected_node_state.has_set_start_pos = true;
-            } else if (!selected_node_state.is_box_selecting && selected_node_state.has_box_selected && selected_node_state.has_set_start_pos) {
+            }
+            else if (!selected_node_state.is_box_selecting && selected_node_state.has_box_selected && selected_node_state.has_set_start_pos) {
                 selected_node_state.has_box_selected = false;
                 selected_node_state.has_set_start_pos = false;
                 selected_node_state.selected_nodes.clear();
