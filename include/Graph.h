@@ -12,7 +12,8 @@
 #include "CL/sycl.hpp"
 #include "dpc_common.hpp"
 #include <vector>
-#include <algorithm>
+#include "AST.h"
+#include <queue>
 #include <string>
 #include "GraphNode.h"
 
@@ -67,6 +68,12 @@ private:
 public:
     Graph();
     ~Graph() = default;
+
+
+    std::set<std::string> get_alphabet();
+    std::set<GraphNode*> get_targets(GraphNode* start, std::string literal);
+    std::set<GraphNode*> compute_epsilon_closure(std::vector<GraphNode*> nodes);
+
     /**
      * Merge a graph
     */
@@ -202,6 +209,8 @@ public:
      * @return Get all nodes that are childless
      */
     std::vector<GraphNode*> get_childless_nodes();
+
+    std::vector<EdgeData> get_edges(GraphNode* node);
 };
 
 

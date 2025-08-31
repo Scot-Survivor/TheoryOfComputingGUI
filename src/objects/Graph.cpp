@@ -9,6 +9,30 @@ Graph::Graph() {
     this->q = sycl::queue(sycl::default_selector_v);
 }
 
+std::set<std::string> Graph::get_alphabet()
+{
+    std::set<std::string> alphabet;
+    for (auto edge: this->edges)
+    {
+        if (edge.label !=  std::string{_EPSILON}) alphabet.insert(edge.label);
+    }
+    return alphabet;
+}
+
+std::set<GraphNode*> Graph::get_targets(GraphNode* start, std::string literal)
+{
+    std::set<GraphNode*> targets;
+    int start_idx = this->get_node_index(start);
+    auto edges = this->get_edges();
+    for (auto edge: edges)
+    {
+        if (edge.n2 == start_idx) continue;
+        if (edge.label != literal) continue;
+        targets.insert(this->get_node(edge.n2));
+    }
+    return targets;
+}
+
 
 void Graph::draw_edges(ImDrawList *drawList) {
     if (this->nodes.empty()) return;
@@ -92,6 +116,28 @@ GraphNode* Graph::get_final_node()
     {
         if (node->get_is_final_node()) return node;
     }
+}
+
+std::set<GraphNode*> Graph::compute_epsilon_closure(std::vector<GraphNode*> nodes)
+{
+    std::set epsilon_closure(nodes.begin(), nodes.end());
+    std::queue<GraphNode*> to_visit;
+    for (auto node : nodes) to_visit.push(node);
+
+    while (!to_visit.empty()) {
+        GraphNode* current = to_visit.front();
+        to_visit.pop();
+        auto edges = this->get_edges(current);
+        for (const auto& edge : edges) {
+            if (edge.label == std::string{_EPSILON}) {
+                GraphNode* next = this->get_node(edge.n2);
+                if (epsilon_closure.insert(next).second) {
+                    to_visit.push(next);
+                }
+            }
+        }
+    }
+    return epsilon_closure;
 }
 
 void Graph::merge(Graph& other)
@@ -298,6 +344,20 @@ std::vector<GraphNode*> Graph::get_childless_nodes()
         }
     }
     return childless;
+}
+
+std::vector<EdgeData> Graph::get_edges(GraphNode* node)
+{
+    std::vector<EdgeData> edges;
+    int idx = this->get_node_index(node);
+    for (auto edge : edges)
+    {
+        if (edge.n1 == idx || edge.n2 == idx)
+        {
+            edges.push_back(edge);
+        }
+    }
+    return edges;
 }
 
 std::vector<GraphNode *> Graph::select_nodes(ImVec2 p1, ImVec2 p2) {

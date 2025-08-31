@@ -4,6 +4,7 @@
 
 #include "Converter.h"
 
+#include <map>
 #include <queue>
 #include <stack>
 
@@ -168,4 +169,54 @@ Graph Converter::convert_regex_to_nfa(const std::string& regex)
         }
     }
     return g;
+}
+
+Graph Converter::convert_nfa_to_dfa(Graph nfa)
+{
+    std::map<std::set<GraphNode*>, GraphNode*> dfa_states;
+    std::queue<std::set<GraphNode*>> to_process;
+    Graph dfa;
+
+    auto nfa_start = nfa.get_start_node();
+    std::set<GraphNode*> start_set = nfa.compute_epsilon_closure({nfa_start});
+    auto dfa_start = new GraphNode("", true, false);
+    dfa_states[start_set] = dfa_start;
+    dfa.add_node(dfa_start);
+    to_process.push(start_set);
+
+    while (!to_process.empty()) {
+        auto current_set = to_process.front();
+        to_process.pop();
+        auto current_dfa_node = dfa_states[current_set];
+
+        // For each input symbol (excluding epsilon)
+        for (const std::string& symbol : nfa.get_alphabet()) {
+            if (symbol == _EPSILON) continue;
+            std::set<GraphNode*> next_set;
+            for (auto nfa_node : current_set) {
+                auto targets = nfa.get_targets(nfa_node, symbol);
+                auto closure = nfa.compute_epsilon_closure(std::vector(targets.begin(), targets.end()));
+                next_set.insert(closure.begin(), closure.end());
+            }
+            if (next_set.empty()) continue;
+
+            // If this set is new, create a DFA node
+            if (dfa_states.find(next_set) == dfa_states.end()) {
+                bool is_final = false;
+                for (auto node : next_set) {
+                    if (node->get_is_final_node()) {
+                        is_final = true;
+                        break;
+                    }
+                }
+                auto new_dfa_node = new GraphNode("DFA_" + std::to_string(dfa_states.size()), false, is_final);
+                dfa_states[next_set] = new_dfa_node;
+                dfa.add_node(new_dfa_node);
+                to_process.push(next_set);
+            }
+            // Add DFA transition
+            dfa.add_edge(symbol, current_dfa_node, dfa_states[next_set]);
+        }
+    }
+    return dfa;
 }

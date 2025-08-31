@@ -16,6 +16,7 @@
 namespace Converter {
     std::string shunting_yard(const std::string& regex);
     Graph convert_regex_to_nfa(const std::string& regex);
+    Graph convert_nfa_to_dfa(Graph nfa);
     void calculate_labels(Graph& graph, const std::string& regex);
 
 };

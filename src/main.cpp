@@ -89,7 +89,8 @@ int main(int argc, char *argv[])
 
     // Our state
     Graph graph = Graph();
-    graph = Converter::convert_regex_to_nfa("A*(ABC)");
+    graph = Converter::convert_regex_to_nfa("A|B|C");
+    graph = Converter::convert_nfa_to_dfa(graph);
 
     auto graph_drawn_state = GraphDrawnState();
     auto selected_node_state = SelectedNodeState();
