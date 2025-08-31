@@ -87,32 +87,8 @@ int main(int argc, char *argv[])
     ImFont* font = io.Fonts->AddFontFromFileTTF("./assets/fonts/LeedsUni.ttf", 18.0f, nullptr, ranges);
     IM_ASSERT(font != nullptr);
 
-    auto ast = AST::parse("A(BC)D");
-
     // Our state
     Graph graph = Graph();
-    float node_radius = 50;
-    auto *master = new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius,  "A(B|C)D", true);
-    graph.add_node(master);
-
-    graph.add_node(
-            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "(B|C)D"),
-            {{"A", 0, 1}});
-
-    graph.add_node(
-            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "BD"),
-            {{"ɛ", 1, 2}});
-
-    graph.add_node(
-            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "CD"),
-            {{"ɛ", 1, 3}});
-
-    graph.add_node(
-            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "D"),
-            {{"B", 2, 4}, {"C", 3, 4}});
-    graph.add_node(
-            new GraphNode(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2), node_radius, "ɛ", false, true),
-            {{"D", 4, 5}});
     graph = Converter::convert_regex_to_nfa("A*(ABC)");
 
     auto graph_drawn_state = GraphDrawnState();
@@ -180,16 +156,18 @@ int main(int argc, char *argv[])
             ImGui::ShowDemoWindow(&window_state.show_demo_window);
 
         if (window_state.regex_creator) {
-            if(ImGui::Begin("Regex Creator", &window_state.regex_creator, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar)) {
+            if(ImGui::Begin("Regex Creator", &window_state.regex_creator, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar)) {
                 ImGui::Text("Regex Creator");
                 ImGui::Separator();
                 ImGui::Text("Regex: ");
                 ImGui::SameLine();
-                ImGui::InputText("##regex", regex_term, IM_ARRAYSIZE(regex_term), ImGuiInputTextFlags_ReadOnly);
+                ImGui::InputText("##regex", regex_term, IM_ARRAYSIZE(regex_term));
+                if (ImGui::Button("Convert!") && strlen(regex_term) > 0)
+                {
+                    graph.clear();
+                    graph = Converter::convert_regex_to_nfa(std::string(regex_term));
+                }
                 ImGui::End();
-                graph.clear();
-                // Ɛ, Generate the NFA Graph
-                std::stack<GraphNode*> node_stack;
             }
         }
 
